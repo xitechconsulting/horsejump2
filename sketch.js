@@ -33,6 +33,11 @@ let horseHitboxScale = 1;
 let collisionPoint = null;
 
 let collisionImg;
+let heartImg;
+let galopSound;
+let lives = 3;
+let maxLives = 3;
+let justHit = false;
 
 function getUrlParam(name) {
   let results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.search);
@@ -52,6 +57,9 @@ function preload() {
     barrelAspect = img.width / img.height;
   });
   collisionImg = loadImage('assets/images/collision.png');
+  heartImg = loadImage('assets/images/heart.png');
+  soundFormats('mp3');
+  galopSound = loadSound('assets/sounds/galop.mp3');
 }
 
 function setup() {
@@ -71,16 +79,20 @@ function setup() {
 function draw() {
   if (level === 0) {
     showLevelChoice();
+    stopGameSound();
     return;
   }
   background(120, 200, 255); // ciel
   drawScrollingGround(gameOver);
+  drawLives();
   
   if (!gameOver) {
+    startGameSound();
     handleHorse();
     handleObstacles();
     checkCollisions();
   } else {
+    stopGameSound();
     handleHorse(true); // afficher le cheval même après la collision
     handleObstacles(true);
     // Afficher l'image de collision si besoin
@@ -91,7 +103,11 @@ function draw() {
     textAlign(CENTER, CENTER);
     textSize(48);
     fill(255, 0, 0);
-    text('Perdu', width / 2, height / 2);
+    if (lives <= 0) {
+      text('Perdu', width / 2, height / 2);
+    } else {
+      text('Touché !', width / 2, height / 2);
+    }
   }
 }
 
@@ -254,8 +270,55 @@ function checkCollisions() {
         x: (ix + ax) / 2,
         y: (iy + ay) / 2
       };
-      gameOver = true;
+      if (!justHit) {
+        lives--;
+        justHit = true;
+        if (lives <= 0) {
+          gameOver = true;
+        } else {
+          gameOver = true;
+          setTimeout(() => {
+            gameOver = false;
+            justHit = false;
+            collisionPoint = null;
+            // On retire l'obstacle touché
+            obstacles = obstacles.filter(o => o !== obs);
+          }, 1100);
+        }
+      }
+      break;
     }
+  }
+}
+
+function startGameSound() {
+  if (galopSound && !galopSound.isPlaying()) {
+    // On lance la lecture à 2s, et on boucle entre 2s et (durée - 2s)
+    let start = 2;
+    let end = galopSound.duration() - 2;
+    if (end <= start) end = galopSound.duration(); // fallback sécurité
+    galopSound.play(0, 1, 1, start, end - start);
+    galopSound.onended(() => {
+      // Boucle manuelle entre 2s et end
+      if (!gameOver && level !== 0) {
+        galopSound.play(0, 1, 1, start, end - start);
+      }
+    });
+  }
+}
+
+function stopGameSound() {
+  if (galopSound && galopSound.isPlaying()) {
+    galopSound.stop();
+    galopSound.onended(() => {}); // retire le callback
+  }
+}
+
+function drawLives() {
+  let sz = 38;
+  let margin = 16;
+  for (let i = 0; i < lives; i++) {
+    image(heartImg, width - margin - sz - i * (sz + 8), margin, sz, sz);
   }
 }
 
@@ -268,4 +331,7 @@ function restartGame() {
   gameOver = false;
   bgOffset = 0;
   collisionPoint = null; // Remettre à zéro au redémarrage
+  lives = maxLives;
+  justHit = false;
+  startGameSound();
 }

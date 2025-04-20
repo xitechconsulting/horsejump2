@@ -134,13 +134,21 @@ function keyPressed() {
     if (key === '1') {
       level = 1;
       horseHitboxScale = 0.6;
+      restartGame();
     } else if (key === '2') {
       level = 2;
       horseHitboxScale = 0.8;
+      restartGame();
     } else if (key === '3') {
       level = 3;
       horseHitboxScale = 1.0;
+      restartGame();
     }
+    return;
+  }
+  if (gameOver && lives <= 0) {
+    level = 0;
+    // On retourne à l'écran de sélection de niveau
     return;
   }
   if (key === ' ' && !isJumping && !gameOver) {

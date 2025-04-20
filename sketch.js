@@ -21,6 +21,8 @@ let groundSpeed = 6;
 
 // État du jeu
 let gameOver = false;
+let pauseAfterHit = false;
+let pauseTimeout = null;
 
 // === Mode debug (affichage des hitboxes) ===
 let debugMode = false;
@@ -35,6 +37,8 @@ let collisionPoint = null;
 let collisionImg;
 let heartImg;
 let galopSound;
+let ouchSound;
+let ouchSegments = [];
 let lives = 3;
 let maxLives = 3;
 let justHit = false;
@@ -49,6 +53,19 @@ let horseImgs = [];
 let barrelImg;
 let barrelAspect = 1; // ratio largeur/hauteur
 
+async function loadOuchSegments() {
+  // Charge les plages depuis ouch.cfg
+  const response = await fetch('assets/sounds/ouch.cfg');
+  const text = await response.text();
+  ouchSegments = text.split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'))
+    .map(line => {
+      const [start, end] = line.split(';').map(Number);
+      return { start, end };
+    });
+}
+
 function preload() {
   for (let i = 0; i < 4; i++) {
     horseImgs[i] = loadImage('assets/images/horse' + i + '.png');
@@ -60,9 +77,10 @@ function preload() {
   heartImg = loadImage('assets/images/heart.png');
   soundFormats('mp3');
   galopSound = loadSound('assets/sounds/galop.mp3');
+  ouchSound = loadSound('assets/sounds/ouch.mp3');
 }
 
-function setup() {
+async function setup() {
   if (getUrlParam('debug') === 'true') debugMode = true;
   createCanvas(800, 400);
   horse = {
@@ -74,6 +92,7 @@ function setup() {
   };
   groundY = height - 80;
   horseY = groundY - horse.h;
+  await loadOuchSegments();
 }
 
 function draw() {
@@ -83,19 +102,17 @@ function draw() {
     return;
   }
   background(120, 200, 255); // ciel
-  drawScrollingGround(gameOver);
+  drawScrollingGround(gameOver || pauseAfterHit);
   drawLives();
   
-  if (!gameOver) {
+  if (!gameOver && !pauseAfterHit) {
     startGameSound();
     handleHorse();
     handleObstacles();
     checkCollisions();
-  } else {
-    stopGameSound();
-    handleHorse(true); // afficher le cheval même après la collision
+  } else if (pauseAfterHit) {
+    handleHorse(true);
     handleObstacles(true);
-    // Afficher l'image de collision si besoin
     if (collisionPoint) {
       let sz = 70;
       image(collisionImg, collisionPoint.x - sz/2, collisionPoint.y - sz/2, sz, sz);
@@ -103,11 +120,19 @@ function draw() {
     textAlign(CENTER, CENTER);
     textSize(48);
     fill(255, 0, 0);
-    if (lives <= 0) {
-      text('Perdu', width / 2, height / 2);
-    } else {
-      text('Touché !', width / 2, height / 2);
+    text('Touché !', width / 2, height / 2);
+  } else {
+    stopGameSound();
+    handleHorse(true);
+    handleObstacles(true);
+    if (collisionPoint) {
+      let sz = 70;
+      image(collisionImg, collisionPoint.x - sz/2, collisionPoint.y - sz/2, sz, sz);
     }
+    textAlign(CENTER, CENTER);
+    textSize(48);
+    fill(255, 0, 0);
+    text('Perdu', width / 2, height / 2);
   }
 }
 
@@ -281,15 +306,15 @@ function checkCollisions() {
       if (!justHit) {
         lives--;
         justHit = true;
+        playRandomOuch();
         if (lives <= 0) {
           gameOver = true;
         } else {
-          gameOver = true;
-          setTimeout(() => {
-            gameOver = false;
+          pauseAfterHit = true;
+          pauseTimeout = setTimeout(() => {
+            pauseAfterHit = false;
             justHit = false;
             collisionPoint = null;
-            // On retire l'obstacle touché
             obstacles = obstacles.filter(o => o !== obs);
           }, 1100);
         }
@@ -330,7 +355,20 @@ function drawLives() {
   }
 }
 
+function playRandomOuch() {
+  if (!ouchSound || ouchSegments.length === 0) return;
+  let idx = floor(random(ouchSegments.length));
+  let seg = ouchSegments[idx];
+  // On clone le buffer pour permettre la superposition
+  let snd = new p5.SoundFile();
+  snd.buffer = ouchSound.buffer;
+  snd.play(0, 1, 1, seg.start, seg.end - seg.start);
+}
+
 function restartGame() {
+  if (pauseTimeout) clearTimeout(pauseTimeout);
+  pauseAfterHit = false;
+  justHit = false;
   obstacles = [];
   horseY = groundY - horse.h;
   horseVY = 0;
@@ -340,6 +378,5 @@ function restartGame() {
   bgOffset = 0;
   collisionPoint = null; // Remettre à zéro au redémarrage
   lives = maxLives;
-  justHit = false;
   startGameSound();
 }

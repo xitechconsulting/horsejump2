@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Config Ouch - Tunning des sons de hit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 30px; }
+    h1 { color: #444; }
+    .sound-row { background: #fff; margin-bottom: 14px; padding: 18px 14px; border-radius: 6px; box-shadow: 0 2px 8px #0001; display: flex; align-items: center; gap: 16px; }
+    .sound-controls { display: flex; gap: 6px; align-items: center; }
+    .sound-controls button { font-size: 1.2em; }
+    .sound-label { font-weight: bold; color: #333; min-width: 60px; }
+    .save-btn { margin-top: 32px; font-size: 1.2em; padding: 12px 32px; background: #1e88e5; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .save-btn:disabled { opacity: 0.5; }
+    .success-msg { color: green; margin-top: 18px; }
+    .error-msg { color: red; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Réglage des sons de hit (ouch.mp3)</h1>
+  <div id="sounds-list">Chargement...</div>
+  <button class="save-btn" id="saveBtn">Enregistrer les changements</button>
+  <div class="success-msg" id="successMsg" style="display:none"></div>
+  <div class="error-msg" id="errorMsg" style="display:none"></div>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js" defer onload="console.log('p5.min.js chargé')"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/addons/p5.sound.min.js" defer onload="console.log('p5.sound.min.js chargé')"></script>
+  <script src="configouch.js" defer></script>
+</body>
+</html>

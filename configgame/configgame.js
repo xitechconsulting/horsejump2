@@ -99,6 +99,19 @@ function loadConfigFromString(str) {
   return cfg;
 }
 
+async function loadConfigFromFile() {
+  try {
+    const response = await fetch('../assets/game.cfg');
+    if (!response.ok) throw new Error('Fichier game.cfg non trouvé');
+    const text = await response.text();
+    const cfg = loadConfigFromString(text);
+    updateInputsFromConfig(cfg);
+  } catch (e) {
+    // Si erreur, on garde les valeurs par défaut
+    console.warn('Impossible de charger game.cfg:', e);
+  }
+}
+
 function downloadConfig(cfg) {
   const blob = new Blob([configToString(cfg)], {type: 'text/plain'});
   const url = URL.createObjectURL(blob);
@@ -131,6 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   }
+  // Valeurs du fichier game.cfg si dispo, sinon défaut
+  loadConfigFromFile();
   // Valeurs par défaut
   updateInputsFromConfig(defaultConfig);
 

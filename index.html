@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Horse Jump - Prototype</title>
+  <style>
+    body {
+      margin: 0;
+      background: #80c8ff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    #game-container {
+      margin-top: 32px;
+      box-shadow: 0 8px 32px #0002;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    h1 {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin-top: 24px;
+      color: #3e2a14;
+    }
+    .instructions {
+      font-size: 1.1em;
+      color: #444;
+      margin-bottom: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <h1>Horse Jump</h1>
+  <div class="instructions">Appuie sur <b>espace</b> pour sauter. Évite les obstacles !</div>
+  <div id="game-container">
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+    <script src="sketch.js"></script>
+  </div>
+</body>
+</html>

@@ -34,6 +34,9 @@ let horseHitboxScale = 1;
 // Nouvelle variable pour stocker la position d'impact
 let collisionPoint = null;
 
+// === SCORE ===
+let score = 0;
+
 let collisionImg;
 let heartImg;
 let galopSound;
@@ -102,6 +105,11 @@ function draw() {
     return;
   }
   background(120, 200, 255); // ciel
+  // Affichage du score en haut à gauche
+  textAlign(LEFT, TOP);
+  textSize(32);
+  fill(40, 40, 40);
+  text('Score : ' + score, 18, 12);
   drawScrollingGround(gameOver || pauseAfterHit);
   drawLives();
   
@@ -249,7 +257,9 @@ function handleObstacles(freeze = false) {
     // Déplacement des obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
       obstacles[i].x -= groundSpeed;
+      // SCORE : si l'obstacle vient juste de sortir à gauche, on incrémente le score
       if (obstacles[i].x + obstacles[i].w < 0) {
+        score++;
         obstacles.splice(i, 1);
       }
     }
@@ -378,5 +388,6 @@ function restartGame() {
   bgOffset = 0;
   collisionPoint = null; // Remettre à zéro au redémarrage
   lives = maxLives;
+  score = 0; // Remise à zéro du score
   startGameSound();
 }

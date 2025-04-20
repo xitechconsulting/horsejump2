@@ -12,12 +12,18 @@ let groundY;
 
 // Obstacles
 let obstacles = [];
-let obstacleInterval = 90; // frames
+let minObstacleInterval = 70;
+let maxObstacleInterval = 140;
+let obstacleInterval = 90; // frames (sera mis à jour aléatoirement)
 let frameSinceLastObstacle = 0;
 
 // Décor (défilement)
 let bgOffset = 0;
 let groundSpeed = 6;
+let baseGroundSpeed = 6;
+let speedIncrease = 0.007; // accélération par frame
+let maxGroundSpeed = 14;
+let maxGroundSpeedUnlimited = false;
 
 // État du jeu
 let gameOver = false;
@@ -46,6 +52,59 @@ let lives = 3;
 let maxLives = 3;
 let justHit = false;
 
+// === CONFIGURATION DYNAMIQUE ===
+let gameConfig = {
+  minObstacleInterval: 40,
+  maxObstacleInterval: 90,
+  baseGroundSpeed: 7,
+  speedIncrease: 0.008,
+  maxGroundSpeed: 15,
+  gravity: 1,
+  jumpStrength: 18,
+  horseHitboxScales: [0.6, 0.8, 1.0],
+  maxLives: 3,
+  maxGroundSpeedUnlimited: false
+};
+
+async function loadGameConfig() {
+  try {
+    const response = await fetch('assets/game.cfg');
+    const text = await response.text();
+    for (let line of text.split(/\r?\n/)) {
+      line = line.trim();
+      if (!line || line.startsWith('#')) continue;
+      let [key, val] = line.split('=');
+      if (!key || val === undefined) continue;
+      key = key.trim();
+      val = val.trim();
+      switch (key) {
+        case 'minObstacleInterval':
+        case 'maxObstacleInterval':
+        case 'maxLives':
+          gameConfig[key] = parseInt(val);
+          break;
+        case 'baseGroundSpeed':
+        case 'speedIncrease':
+        case 'maxGroundSpeed':
+        case 'gravity':
+        case 'jumpStrength':
+          gameConfig[key] = parseFloat(val);
+          break;
+        case 'horseHitboxScales':
+          gameConfig[key] = val.split(',').map(Number);
+          break;
+        case 'maxGroundSpeedUnlimited':
+          gameConfig[key] = (val === '1' || val === 'true');
+          break;
+        default:
+          break;
+      }
+    }
+  } catch (e) {
+    console.warn('Impossible de charger game.cfg, valeurs par défaut utilisées.');
+  }
+}
+
 function getUrlParam(name) {
   let results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.search);
   return results ? decodeURIComponent(results[1]) : null;
@@ -69,7 +128,18 @@ async function loadOuchSegments() {
     });
 }
 
-function preload() {
+async function preload() {
+  await loadGameConfig();
+  // Applique la config aux variables globales
+  minObstacleInterval = gameConfig.minObstacleInterval;
+  maxObstacleInterval = gameConfig.maxObstacleInterval;
+  baseGroundSpeed = gameConfig.baseGroundSpeed;
+  speedIncrease = gameConfig.speedIncrease;
+  maxGroundSpeed = gameConfig.maxGroundSpeed;
+  gravity = gameConfig.gravity;
+  maxLives = gameConfig.maxLives;
+  maxGroundSpeedUnlimited = gameConfig.maxGroundSpeedUnlimited || false;
+  // jumpStrength et horseHitboxScales seront utilisés dans keyPressed()
   for (let i = 0; i < 4; i++) {
     horseImgs[i] = loadImage('assets/images/horse' + i + '.png');
   }
@@ -103,6 +173,14 @@ function draw() {
     showLevelChoice();
     stopGameSound();
     return;
+  }
+  // Accélération progressive
+  if (!gameOver && !pauseAfterHit) {
+    if (maxGroundSpeedUnlimited) {
+      groundSpeed = groundSpeed + speedIncrease;
+    } else {
+      groundSpeed = min(groundSpeed + speedIncrease, maxGroundSpeed);
+    }
   }
   background(120, 200, 255); // ciel
   // Affichage du score en haut à gauche
@@ -159,22 +237,42 @@ function showLevelChoice() {
   text('3 : Difficile (hitbox 100%)', width / 2, height / 2 + 100);
   textSize(18);
   fill(30);
-  text('Appuie sur 1, 2 ou 3', width / 2, height / 2 + 160);
+  text('Appuie sur 1, 2 ou 3', width / 2, height / 2 + 155);
+  // BOUTON CONFIG
+  let btnW = 250, btnH = 44;
+  let btnX = width/2 - btnW/2, btnY = height - 60;
+  fill(80, 120, 220);
+  stroke(30, 60, 120);
+  strokeWeight(2);
+  rect(btnX, btnY, btnW, btnH, 12);
+  noStroke();
+  fill(255);
+  textSize(22);
+  text('Configurer le jeu', width/2, btnY + btnH/2);
+  // Gestion du clic
+  if (mouseIsPressed && mouseButton === LEFT) {
+    if (
+      mouseX >= btnX && mouseX <= btnX + btnW &&
+      mouseY >= btnY && mouseY <= btnY + btnH
+    ) {
+      window.open('configgame/index.html', '_blank');
+    }
+  }
 }
 
 function keyPressed() {
   if (level === 0) {
     if (key === '1') {
       level = 1;
-      horseHitboxScale = 0.6;
+      horseHitboxScale = gameConfig.horseHitboxScales[0];
       restartGame();
     } else if (key === '2') {
       level = 2;
-      horseHitboxScale = 0.8;
+      horseHitboxScale = gameConfig.horseHitboxScales[1];
       restartGame();
     } else if (key === '3') {
       level = 3;
-      horseHitboxScale = 1.0;
+      horseHitboxScale = gameConfig.horseHitboxScales[2];
       restartGame();
     }
     return;
@@ -186,7 +284,7 @@ function keyPressed() {
   }
   if (key === ' ' && !isJumping && !gameOver) {
     isJumping = true;
-    horseVY = -17;
+    horseVY = -gameConfig.jumpStrength;
   }
   if (gameOver && key === ' ') {
     restartGame();
@@ -252,6 +350,8 @@ function handleObstacles(freeze = false) {
     frameSinceLastObstacle++;
     if (frameSinceLastObstacle >= obstacleInterval) {
       spawnObstacle();
+      // Distance aléatoire pour le prochain obstacle, indépendante de la vitesse
+      obstacleInterval = floor(random(minObstacleInterval, maxObstacleInterval + 1));
       frameSinceLastObstacle = 0;
     }
     // Déplacement des obstacles
@@ -384,6 +484,9 @@ function restartGame() {
   horseVY = 0;
   isJumping = false;
   frameSinceLastObstacle = 0;
+  // Nouvelle distance aléatoire au redémarrage
+  obstacleInterval = floor(random(minObstacleInterval, maxObstacleInterval + 1));
+  groundSpeed = baseGroundSpeed; // Réinitialise la vitesse
   gameOver = false;
   bgOffset = 0;
   collisionPoint = null; // Remettre à zéro au redémarrage

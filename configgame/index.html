@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuration Jeu - Horse Jump</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; background: #e9f0fa; color: #222; }
+    .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 10px #0001; padding: 24px; }
+    h1 { text-align: center; }
+    label { display: block; margin-top: 18px; font-weight: bold; }
+    input[type=range] { width: 100%; }
+    .row { display: flex; align-items: center; margin-bottom: 10px; }
+    .row input[type=number] { width: 70px; margin-left: 10px; }
+    .row input[type=text] { width: 120px; margin-left: 10px; }
+    .buttons { margin-top: 30px; text-align: center; }
+    button { margin: 0 10px; padding: 8px 18px; font-size: 1em; }
+    .hint { font-size: 0.9em; color: #666; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Configuration du Jeu</h1>
+  <form id="configForm">
+    <label>Espacement minimal obstacles (frames)
+      <div class="row">
+        <input type="range" min="10" max="200" step="1" id="minObstacleInterval">
+        <input type="number" min="10" max="200" step="1" id="minObstacleIntervalNum">
+      </div>
+    </label>
+    <label>Espacement maximal obstacles (frames)
+      <div class="row">
+        <input type="range" min="10" max="300" step="1" id="maxObstacleInterval">
+        <input type="number" min="10" max="300" step="1" id="maxObstacleIntervalNum">
+      </div>
+    </label>
+    <label>Vitesse de départ
+      <div class="row">
+        <input type="range" min="2" max="20" step="0.1" id="baseGroundSpeed">
+        <input type="number" min="2" max="20" step="0.1" id="baseGroundSpeedNum">
+      </div>
+    </label>
+    <label>Accélération (par frame)
+      <div class="row">
+        <input type="range" min="0" max="0.05" step="0.001" id="speedIncrease">
+        <input type="number" min="0" max="0.05" step="0.001" id="speedIncreaseNum">
+      </div>
+      <span class="hint">Plus la valeur est élevée, plus le jeu accélère vite.</span>
+    </label>
+    <label>Vitesse maximale
+      <div class="row">
+        <input type="range" min="5" max="999" step="0.1" id="maxGroundSpeed">
+        <input type="number" min="0" max="999" step="0.1" id="maxGroundSpeedNum">
+        <input type="checkbox" id="maxGroundSpeedUnlimited" style="margin-left:18px;"> <span style="font-size:0.95em;">Illimitée</span>
+      </div>
+    </label>
+    <label>Gravité
+      <div class="row">
+        <input type="range" min="0.1" max="5" step="0.01" id="gravity">
+        <input type="number" min="0.1" max="5" step="0.01" id="gravityNum">
+      </div>
+    </label>
+    <label>Force du saut
+      <div class="row">
+        <input type="range" min="5" max="30" step="0.1" id="jumpStrength">
+        <input type="number" min="5" max="30" step="0.1" id="jumpStrengthNum">
+      </div>
+    </label>
+    <label>Hitbox (facile, moyen, difficile)
+      <div class="row">
+        <input type="text" id="horseHitboxScales" pattern="[0-9., ]+">
+        <span class="hint">Ex: 0.6,0.8,1.0</span>
+      </div>
+    </label>
+    <label>Nombre de vies
+      <div class="row">
+        <input type="range" min="1" max="10" step="1" id="maxLives">
+        <input type="number" min="1" max="10" step="1" id="maxLivesNum">
+      </div>
+    </label>
+    <div class="buttons">
+      <button type="button" id="saveBtn">Télécharger la configuration</button>
+      <button type="button" id="resetBtn">Valeurs par défaut</button>
+      <button type="button" id="importBtn">Importer…</button>
+      <input type="file" id="importFile" style="display:none">
+    </div>
+  </form>
+</div>
+<script src="configgame.js"></script>
+</body>
+</html>
